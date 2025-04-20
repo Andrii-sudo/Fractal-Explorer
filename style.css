@@ -26,8 +26,7 @@ canvas
 {
     border: 1px solid #999;
     background: white;
-    width: 1170px;
-    height: 690px;
+    display: block;
 }
 
 .controls

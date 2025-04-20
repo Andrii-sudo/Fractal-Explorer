@@ -19,11 +19,64 @@ let pow2 = 1;
 let center = { x: canvas.width  / 2,
                                   y: canvas.height / 2 };
 
+let isCanvasClear = true;
+
 let centerR = 0;
 let centerI = 0;
 let scale = 1 / (canvas.width / 4);
+let rotationAngle = 0;
 
-document.getElementById("btn-draw").addEventListener("click", drawFractal);
+document.getElementById("btn-draw").addEventListener("click", () =>
+{
+    isCanvasClear = false;
+    centerR = 0;
+    centerI = 0;
+    scale = 1 / (canvas.width / 4);
+    rotationAngle = 0;
+    drawFractal();
+});
+
+document.getElementById("btn-location").addEventListener("click", drawFractal);
+
+canvas.addEventListener("dblclick", event =>
+{
+    if (!isCanvasClear)
+    {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        let [r, i] = canvasToComplex(mouseX, mouseY);
+
+        centerR = r;
+        centerI = i;
+
+        scale *= 0.5;
+
+        drawFractal();
+    }
+});
+
+canvas.addEventListener("contextmenu", event =>
+{
+    event.preventDefault();
+    if (!isCanvasClear)
+    {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (event.clientX - rect.left);
+        const mouseY = (event.clientY - rect.top);
+
+        let [r, i] = canvasToComplex(mouseX, mouseY);
+
+        centerR = r;
+        centerI = i;
+
+        scale /= 0.5;
+
+        drawFractal();
+    }
+});
+
 
 document.getElementById("fractal-type").addEventListener("change", fractalTypeChanged);
 document.getElementById("maxIter").addEventListener("input", maxIterChanged);
@@ -387,8 +440,117 @@ function pow2Changed()
     }
 }
 
+// rotation
+
+document.getElementById("centerRe").addEventListener("input", centerReChanged);
+document.getElementById("centerIm").addEventListener("input", centerImChanged);
+document.getElementById("zoom").addEventListener("input", zoomChanged);
+document.getElementById("rotationAngle").addEventListener("input", rotationAngleChanged);
+
+document.getElementById("centerRe").addEventListener("blur", () =>
+{
+    if (document.getElementById("centerRe").classList.contains("invalid"))
+    {
+        centerR = 0;
+        document.getElementById("centerRe").value = 0;
+        document.getElementById("centerRe").classList.remove("invalid");
+    }
+});
+
+document.getElementById("centerIm").addEventListener("blur", () =>
+{
+    if (document.getElementById("centerIm").classList.contains("invalid"))
+    {
+        centerI = 0;
+        document.getElementById("centerIm").value = 0;
+        document.getElementById("centerIm").classList.remove("invalid");
+    }
+});
+
+document.getElementById("zoom").addEventListener("blur", () =>
+{
+    if (document.getElementById("zoom").classList.contains("invalid"))
+    {
+        scale =  1 / (canvas.width / 4);
+        document.getElementById("zoom").value = 1;
+        document.getElementById("zoom").classList.remove("invalid");
+    }
+});
+
+document.getElementById("rotationAngle").addEventListener("blur", () =>
+{
+    if (document.getElementById("rotationAngle").classList.contains("invalid"))
+    {
+        rotationAngle = 0;
+        document.getElementById("rotationAngle").value = 0;
+        document.getElementById("rotationAngle").classList.remove("invalid");
+    }
+});
+
+function centerReChanged()
+{
+    let num = parseFloat(document.getElementById("centerRe").value);
+    if (!isNaN(num))
+    {
+        centerR = num;
+        document.getElementById("centerRe").classList.remove("invalid");
+    }
+    else
+    {
+        document.getElementById("centerRe").classList.add("invalid");
+    }
+}
+
+function centerImChanged()
+{
+    let num = parseFloat(document.getElementById("centerIm").value);
+    if (!isNaN(num))
+    {
+        centerI = num;
+        document.getElementById("centerIm").classList.remove("invalid");
+    }
+    else
+    {
+        document.getElementById("centerIm").classList.add("invalid");
+    }
+}
+
+function zoomChanged()
+{
+    let num = parseFloat(document.getElementById("zoom").value);
+    if (!isNaN(num))
+    {
+        scale = 1 / num / (canvas.width / 4);
+        document.getElementById("zoom").classList.remove("invalid");
+    }
+    else
+    {
+        document.getElementById("zoom").classList.add("invalid");
+    }
+}
+
+function rotationAngleChanged()
+{
+    let num = parseFloat(document.getElementById("rotationAngle").value);
+    if (!isNaN(num))
+    {
+        rotationAngle = num;
+        document.getElementById("rotationAngle").classList.remove("invalid");
+    }
+    else
+    {
+        document.getElementById("rotationAngle").classList.add("invalid");
+    }
+}
+
+
 function drawFractal()
 {
+    document.getElementById("centerRe").value = centerR;
+    document.getElementById("centerIm").value = centerI;
+    document.getElementById("zoom").value = 1 / scale * 4 / canvas.width;
+    document.getElementById("rotationAngle").value = rotationAngle;
+
     let i = 0;
     let frame = new ImageData(canvas.width, canvas.height);
     for (let y = 0; y < canvas.height; y++)
@@ -397,13 +559,26 @@ function drawFractal()
         {
             const color = fractalType(x, y);
             let [r, g, b] = hexToRGB(color);
+
             frame.data[i++] = r;
             frame.data[i++] = g;
             frame.data[i++] = b;
             frame.data[i++] = 255;
         }
     }
+
     ctx.putImageData(frame, 0, 0);
+}
+
+function rotate(x, y, angle) {
+    const radians = (Math.PI / 180) * angle;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const dx = x - center.x;
+    const dy = y - center.y;
+    const nx = dx * cos - dy * sin + center.x;
+    const ny = dx * sin + dy * cos + center.y;
+    return [Math.round(nx), Math.round(ny)];
 }
 
 function hexToRGB(color)
@@ -420,17 +595,11 @@ function hexToRGB(color)
 
 function canvasToComplex(x, y)
 {
-    let r = centerR +  (x - center.x) * scale;
-    let i = centerI + -(y - center.y) * scale;
-    return [r, i];
-}
+    let [nx, ny] = rotate(x, y, rotationAngle);
 
-function fillPixel(x, y, color)
-{
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, 1, 0, Math.PI * 2);
-    ctx.fill();
+    let r = centerR +  (nx - center.x) * scale;
+    let i = centerI + -(ny - center.y) * scale;
+    return [r, i];
 }
 
 function fillMandelbrotPixel(x, y)
