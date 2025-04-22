@@ -1,3 +1,12 @@
+const colors =
+    [
+        "#000049", "#000555", "#000C66", "#002577", "#003A8C", "#004F9E", "#0063B2",
+        "#0077C4", "#0091D8", "#00A4DD", "#00B8E6", "#30C6EC", "#60D2F4", "#80D8F5",
+        "#9BD2F5", "#B8DADB", "#D7E3DE", "#F4EBA5", "#FFEDAF", "#FFE57A", "#FFDE64",
+        "#FFD433", "#FFC300", "#F8B200", "#F0AA00", "#E19900", "#DC8C00", "#C87500",
+        "#B45500"
+    ];
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -36,7 +45,13 @@ document.getElementById("btn-draw").addEventListener("click", () =>
     drawFractal();
 });
 
-document.getElementById("btn-location").addEventListener("click", drawFractal);
+document.getElementById("btn-location").addEventListener("click", () =>
+{
+    if (!isCanvasClear)
+    {
+        drawFractal();
+    }
+});
 
 canvas.addEventListener("dblclick", event =>
 {
@@ -200,6 +215,53 @@ function fractalTypeChanged()
         document.getElementById("initC").style.display = "block";
     }
     //else if (fractalType === "burning-ship") { }
+    updateAnimParams(strFractalType);
+}
+
+function updateAnimParams(type)
+{
+    const animParam = document.getElementById("animParam");
+    while (animParam.firstChild)
+    {
+        animParam.removeChild(animParam.firstChild);
+    }
+
+    const kOption = document.createElement("option");
+    kOption.value = "k";
+    kOption.textContent = "Кількість ітерацій";
+    animParam.appendChild(kOption);
+
+    if (type === "mandelbrot")
+    {
+        const zrOption = document.createElement("option");
+        zrOption.value = "zr";
+        zrOption.textContent = "Дійсна частина (Zr)";
+        animParam.appendChild(zrOption);
+
+        const ziOption = document.createElement("option");
+        ziOption.value = "zi";
+        ziOption.textContent = "Уявна частина (Zi)";
+        animParam.appendChild(ziOption);
+    }
+    else if (type === "julia")
+    {
+        const crOption = document.createElement("option");
+        crOption.value = "cr";
+        crOption.textContent = "Дійсна частина (Cr)";
+        animParam.appendChild(crOption);
+
+        const ciOption = document.createElement("option");
+        ciOption.value = "ci";
+        ciOption.textContent = "Уявна частина (Ci)";
+        animParam.appendChild(ciOption);
+    }
+
+    const rOption = document.createElement("option");
+    rOption.value = "r";
+    rOption.textContent = "Поріг втечі";
+    animParam.appendChild(rOption);
+
+    animParam.dispatchEvent(new Event("change"));
 }
 
 function maxIterChanged()
@@ -543,6 +605,288 @@ function rotationAngleChanged()
     }
 }
 
+// animation
+let animParam = "k";
+let animInit = 0;
+let animLast = 0;
+let animStep = 0.05;
+let frames;
+const EPSILON = 0.0000000001;
+
+document.getElementById("animParam").addEventListener("change", () =>
+{
+    animParam = document.getElementById("animParam").value;
+    let labAnimInit = document.getElementById("lab-anim-init");
+    let labAnimLast = document.getElementById("lab-anim-last");
+
+    document.getElementById("anim-init").removeAttribute("min");
+    document.getElementById("anim-last").removeAttribute("min");
+
+    switch (animParam)
+    {
+        case "k":
+            labAnimInit.textContent = "Почат. к. ітер:";
+            labAnimLast.textContent = "Кінцева к. ітер:";
+            break;
+        case "zr":
+            labAnimInit.textContent = "Початкове Zr:";
+            labAnimLast.textContent = "Кінцеве Zr:";
+            break;
+        case "zi":
+            labAnimInit.textContent = "Початкове Zi:";
+            labAnimLast.textContent = "Кінцевe Zi:";
+            break;
+        case "cr":
+            labAnimInit.textContent = "Початкове Cr:";
+            labAnimLast.textContent = "Кінцеве Cr:";
+            break;
+        case "ci":
+            labAnimInit.textContent = "Початкове Ci:";
+            labAnimLast.textContent = "Кінцевe Ci:";
+            break;
+        case "r":
+            labAnimInit.textContent = "Початковий поріг:";
+            labAnimLast.textContent = "Кінцевий поріг:";
+            document.getElementById("anim-init").min = 0;
+            document.getElementById("anim-last").min = 0;
+            break;
+    }
+});
+
+document.getElementById("anim-init").addEventListener("input", () =>
+{
+    let num = parseFloat(document.getElementById("anim-init").value);
+    if (!isNaN(num))
+    {
+        if (num < 0 && (animParam === "k" || animParam === "r"))
+        {
+            document.getElementById("anim-init").classList.add("invalid");
+        }
+        else
+        {
+            animInit = num;
+            document.getElementById("anim-init").classList.remove("invalid");
+        }
+    }
+    else
+    {
+        document.getElementById("anim-init").classList.add("invalid");
+    }
+});
+
+document.getElementById("anim-init").addEventListener("blur", () =>
+{
+    if (document.getElementById("anim-init").classList.contains("invalid"))
+    {
+        animInit = 0;
+        document.getElementById("anim-init").value = 0;
+        document.getElementById("anim-init").classList.remove("invalid");
+    }
+    else if (animParam === "k" || animParam === "r")
+    {
+        animInit = Math.floor(animInit);
+        document.getElementById("anim-last").value = animInit;
+    }
+});
+
+document.getElementById("anim-last").addEventListener("input", () =>
+{
+    let num = parseFloat(document.getElementById("anim-last").value);
+    if (!isNaN(num))
+    {
+        if (num < 0 && (animParam === "k" || animParam === "r"))
+        {
+            document.getElementById("anim-last").classList.add("invalid");
+        }
+        else
+        {
+            animLast = num;
+            document.getElementById("anim-last").classList.remove("invalid");
+        }
+    }
+    else
+    {
+        document.getElementById("anim-last").classList.add("invalid");
+    }
+});
+
+document.getElementById("anim-last").addEventListener("blur", () =>
+{
+    if (document.getElementById("anim-last").classList.contains("invalid"))
+    {
+        animLast = 0;
+        document.getElementById("anim-last").value = 0;
+        document.getElementById("anim-last").classList.remove("invalid");
+    }
+    else if (animParam === "k" || animParam === "r")
+    {
+        animLast = Math.floor(animLast);
+        document.getElementById("anim-last").value = animLast;
+    }
+
+});
+
+document.getElementById("anim-step").addEventListener("input", () =>
+{
+    let num = parseFloat(document.getElementById("anim-step").value);
+    if (!isNaN(num))
+    {
+        if (num <= 0.00001)
+        {
+            document.getElementById("anim-step").classList.add("invalid");
+        }
+        else
+        {
+            animStep = num;
+            document.getElementById("anim-step").classList.remove("invalid");
+        }
+    }
+    else
+    {
+        document.getElementById("anim-step").classList.add("invalid");
+    }
+});
+
+document.getElementById("anim-step").addEventListener("blur", () =>
+{
+    if (document.getElementById("anim-step").classList.contains("invalid"))
+    {
+        animStep = 0.05;
+        document.getElementById("anim-step").value = 0.05;
+        document.getElementById("anim-step").classList.remove("invalid");
+    }
+});
+
+document.getElementById("btn-anim").addEventListener("click", () =>
+{
+    if (!isCanvasClear)
+    {
+        animFractal();
+    }
+});
+
+function animFractal()
+{
+    frames = new Array(0);
+
+    let isForward = true;
+    if (animInit > animLast)
+    {
+        isForward = false;
+    }
+
+    let temp;
+    switch (animParam)
+    {
+        case "k":
+            temp = kmax;
+            kmax    = animInit;
+            break;
+        case "zr":
+            temp = initZr;
+            initZr  = animInit;
+            break;
+        case "zi":
+            temp = initZi;
+            initZi  = animInit;
+            break;
+        case "cr":
+            temp = constCr;
+            constCr = animInit;
+            break;
+        case "ci":
+            temp = constCi;
+            constCi = animInit;
+            break;
+        case "r":
+            temp = bailout;
+            bailout = animInit;
+            break;
+    }
+
+    let frIndex = 0;
+    do
+    {
+        let i = 0;
+        frames.push(new ImageData(canvas.width, canvas.height));
+        for (let y = 0; y < canvas.height; y++)
+        {
+            for (let x = 0; x < canvas.width; x++)
+            {
+                const color = fractalType(x, y);
+                let [r, g, b] = hexToRGB(color);
+
+                frames[frIndex].data[i++] = r;
+                frames[frIndex].data[i++] = g;
+                frames[frIndex].data[i++] = b;
+                frames[frIndex].data[i++] = 255;
+            }
+        }
+        console.log(`k = ${kmax}`);
+        console.log(`cr = ${constCr}`);
+        console.log(`ci = ${constCi}`);
+        console.log(`zr = ${initZr}`);
+        console.log(`zi = ${initZi}`);
+        console.log(`bailout = ${bailout}`);
+
+        frIndex++;
+    } while (changeAnimParam(isForward));
+
+    document.getElementById("slider").max = frames.length - 1;
+    document.getElementById("slider").disabled = false;
+
+    switch (animParam)
+    {
+        case "k":
+            kmax = temp;
+            break;
+        case "zr":
+            initZr = temp;
+            break;
+        case "zi":
+            initZi = temp;
+            break;
+        case "cr":
+            constCr = temp;
+            break;
+        case "ci":
+            constCi = temp;
+            break;
+        case "r":
+            bailout = temp;
+            break;
+    }
+}
+
+document.getElementById("slider").addEventListener("input", () =>
+{
+    ctx.putImageData(frames[document.getElementById("slider").value], 0, 0);
+});
+
+function changeAnimParam(isForward)
+{
+    switch (animParam)
+    {
+        case "k":
+            (isForward) ? kmax    += animStep : kmax    -= animStep;
+            return (isForward) ? kmax < animLast   : kmax > animLast;
+        case "zr":
+            (isForward) ? initZr  += animStep : initZr  -= animStep;
+            return (isForward) ? initZr < animLast + EPSILON : initZr > animLast - EPSILON;
+        case "zi":
+            (isForward) ? initZi  += animStep : initZi  -= animStep;
+            return (isForward) ? initZi < animLast + EPSILON : initZi > animLast - EPSILON;
+        case "cr":
+            (isForward) ? constCr += animStep : constCr  -= animStep;
+            return (isForward) ? constCr < animLast + EPSILON : constCr > animLast - EPSILON;
+        case "ci":
+            (isForward) ? constCi += animStep : constCi  -= animStep;
+            return (isForward) ? constCi < animLast + EPSILON : constCi > animLast - EPSILON;
+        case "r":
+            (isForward) ? bailout += animStep : bailout  -= animStep;
+            return (isForward) ? bailout < animLast + EPSILON : bailout > animLast - EPSILON;
+    }
+}
 
 function drawFractal()
 {
@@ -550,6 +894,8 @@ function drawFractal()
     document.getElementById("centerIm").value = centerI;
     document.getElementById("zoom").value = 1 / scale * 4 / canvas.width;
     document.getElementById("rotationAngle").value = rotationAngle;
+
+    document.getElementById("slider").disabled = true;
 
     let i = 0;
     let frame = new ImageData(canvas.width, canvas.height);
@@ -742,13 +1088,3 @@ function ChZ(zr, zi)
 
     return [newZr, newZi];
 }
-
-
-const colors =
-[
-    "#000049", "#000555", "#000C66", "#002577", "#003A8C", "#004F9E", "#0063B2",
-    "#0077C4", "#0091D8", "#00A4DD", "#00B8E6", "#30C6EC", "#60D2F4", "#80D8F5",
-    "#9BD2F5", "#B8DADB", "#D7E3DE", "#F4EBA5", "#FFEDAF", "#FFE57A", "#FFDE64",
-    "#FFD433", "#FFC300", "#F8B200", "#F0AA00", "#E19900", "#DC8C00", "#C87500",
-    "#B45500"
-];
