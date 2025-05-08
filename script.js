@@ -10,6 +10,8 @@ const colors =
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+const canvasSpinner = document.getElementById("canvas-spinner");
+
 canvas.width = 1170;
 canvas.height = 690;
 
@@ -42,20 +44,41 @@ document.getElementById("btn-draw").addEventListener("click", () =>
     centerI = 0;
     scale = 1 / (canvas.width / 4);
     rotationAngle = 0;
-    drawFractal();
+
+    showCanvasSpinner();
+    setTimeout(() =>
+    {
+        drawFractal();
+        hideCanvasSpinner();
+    }, 10);
 });
 
 document.getElementById("btn-location").addEventListener("click", () =>
 {
     if (!isCanvasClear)
     {
-        drawFractal();
+        showCanvasSpinner();
+        setTimeout(() =>
+        {
+            drawFractal();
+            hideCanvasSpinner();
+        }, 10);
     }
     else
     {
         alert("Спочатку намалюйте фрактал, щоб застосувати цю дію");
     }
 });
+
+
+function showCanvasSpinner()
+{
+    canvasSpinner.style.display = "block";
+}
+function hideCanvasSpinner()
+{
+    canvasSpinner.style.display = "none";
+}
 
 canvas.addEventListener("dblclick", event =>
 {

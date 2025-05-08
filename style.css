@@ -194,3 +194,33 @@ button:hover {
 {
     background: #c0392b;
 }
+
+#canvas-container
+{
+    position: relative;
+}
+
+#canvas-spinner
+{
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+    margin-top: -24px;
+    border: 6px solid #b8dadb;
+    border-top: 6px solid #0077c4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    z-index: 100;
+    background: transparent;
+    pointer-events: none;
+}
+
+@keyframes spin
+{
+    0%   { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
