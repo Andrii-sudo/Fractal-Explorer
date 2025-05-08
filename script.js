@@ -51,11 +51,15 @@ document.getElementById("btn-location").addEventListener("click", () =>
     {
         drawFractal();
     }
+    else
+    {
+        alert("Спочатку намалюйте фрактал, щоб застосувати цю дію");
+    }
 });
 
 canvas.addEventListener("dblclick", event =>
 {
-    if (!isCanvasClear)
+    if (!isCanvasClear && !isAnimating)
     {
         const rect = canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
@@ -75,7 +79,8 @@ canvas.addEventListener("dblclick", event =>
 canvas.addEventListener("contextmenu", event =>
 {
     event.preventDefault();
-    if (!isCanvasClear)
+
+    if (!isCanvasClear && !isAnimating)
     {
         const rect = canvas.getBoundingClientRect();
         const mouseX = (event.clientX - rect.left);
@@ -187,6 +192,9 @@ document.addEventListener("DOMContentLoaded", () =>
     {
         btn.addEventListener('click', () =>
         {
+            if (isAnimating) return;
+
+
             buttons.forEach(b => b.classList.remove("active"));
             tabs.forEach(t => t.classList.remove("active"));
 
@@ -759,15 +767,46 @@ document.getElementById("anim-step").addEventListener("blur", () =>
 
 document.getElementById("btn-anim").addEventListener("click", () =>
 {
-    if (!isCanvasClear)
+    if (!isCanvasClear && !isAnimating)
     {
+        document.getElementById("btn-anim").style.cursor = "not-allowed";
+        document.querySelectorAll(".tab-buttons button")[0].style.cursor = "not-allowed";
+        document.querySelectorAll(".tab-buttons button")[1].style.cursor = "not-allowed";
+
         animFractal();
     }
+    else
+    {
+        alert("Спочатку намалюйте фрактал, щоб застосувати цю дію");
+    }
+});
+
+let isAnimating = false;
+let cancelRequested = false;
+const progressContainer = document.getElementById("progress-container");
+const progressBar = document.getElementById("fractal-progress");
+const btnCancel = document.getElementById("btn-cancel");
+const progressLabel = document.getElementById("progress-label");
+
+btnCancel.addEventListener("click", () =>
+{
+    cancelRequested = true;
+    progressLabel.textContent = "Зупиняється...";
 });
 
 function animFractal()
 {
+    isAnimating = true;
+
+    document.getElementById("")
+
     frames = new Array(0);
+    cancelRequested = false;
+
+    progressContainer.style.display = "flex";
+    progressBar.value = 0;
+    progressBar.max = 1;
+    progressLabel.textContent = "Генерується...";
 
     let isForward = true;
     if (animInit > animLast)
@@ -780,15 +819,15 @@ function animFractal()
     {
         case "k":
             temp = kmax;
-            kmax    = animInit;
+            kmax = animInit;
             break;
         case "zr":
             temp = initZr;
-            initZr  = animInit;
+            initZr = animInit;
             break;
         case "zi":
             temp = initZi;
-            initZi  = animInit;
+            initZi = animInit;
             break;
         case "cr":
             temp = constCr;
@@ -804,9 +843,42 @@ function animFractal()
             break;
     }
 
-    let frIndex = 0;
-    do
+    let totalFrames = 1;
+    if (animStep > 0)
     {
+        totalFrames = Math.floor(Math.abs((animLast - animInit) / animStep)) + 1;
+    }
+    progressBar.max = totalFrames;
+
+    let frIndex = 0;
+    let done = false;
+
+    function generateFrame()
+    {
+        if (cancelRequested)
+        {
+            done = true;
+            progressLabel.textContent = "Анімацію зупинено";
+            setTimeout(() => { progressContainer.style.display = "none"; }, 700);
+
+            switch (animParam)
+            {
+                case "k":  kmax    = temp; break;
+                case "zr": initZr  = temp; break;
+                case "zi": initZi  = temp; break;
+                case "cr": constCr = temp; break;
+                case "ci": constCi = temp; break;
+                case "r":  bailout = temp; break;
+            }
+
+            isAnimating = false;
+            document.getElementById("btn-anim").style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[0].style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[1].style.cursor = "pointer";
+
+            return;
+        }
+
         let i = 0;
         frames.push(new ImageData(canvas.width, canvas.height));
         for (let y = 0; y < canvas.height; y++)
@@ -822,42 +894,73 @@ function animFractal()
                 frames[frIndex].data[i++] = 255;
             }
         }
-        console.log(`k = ${kmax}`);
-        console.log(`cr = ${constCr}`);
-        console.log(`ci = ${constCi}`);
-        console.log(`zr = ${initZr}`);
-        console.log(`zi = ${initZi}`);
-        console.log(`bailout = ${bailout}`);
 
         frIndex++;
-    } while (changeAnimParam(isForward));
+        progressBar.value = frIndex;
+        progressLabel.textContent = `Кадр ${frIndex} з ${totalFrames}`;
 
-    document.getElementById("slider").max = frames.length - 1;
-    document.getElementById("slider").disabled = false;
+        if (!changeAnimParam(isForward) || done)
+        {
+            document.getElementById("slider").max = frames.length - 1;
+            document.getElementById("slider").disabled = false;
+            progressLabel.textContent = "Готово!";
+            setTimeout(() => { progressContainer.style.display = "none"; }, 700);
 
+            switch (animParam)
+            {
+                case "k":  kmax    = temp; break;
+                case "zr": initZr  = temp; break;
+                case "zi": initZi  = temp; break;
+                case "cr": constCr = temp; break;
+                case "ci": constCi = temp; break;
+                case "r":  bailout = temp; break;
+            }
+
+            isAnimating = false;
+            document.getElementById("btn-anim").style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[0].style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[1].style.cursor = "pointer";
+
+            return;
+        }
+        else
+        {
+            setTimeout(generateFrame, 10);
+        }
+    }
+
+    generateFrame();
+}
+
+document.getElementById("slider").addEventListener("input", () =>
+{
+    ctx.putImageData(frames[document.getElementById("slider").value], 0, 0);
+});
+
+function changeAnimParam(isForward)
+{
     switch (animParam)
     {
         case "k":
-            kmax = temp;
-            break;
+            (isForward) ? kmax    += animStep : kmax    -= animStep;
+            return (isForward) ? kmax < animLast   : kmax > animLast;
         case "zr":
-            initZr = temp;
-            break;
+            (isForward) ? initZr  += animStep : initZr  -= animStep;
+            return (isForward) ? initZr < animLast + EPSILON : initZr > animLast - EPSILON;
         case "zi":
-            initZi = temp;
-            break;
+            (isForward) ? initZi  += animStep : initZi  -= animStep;
+            return (isForward) ? initZi < animLast + EPSILON : initZi > animLast - EPSILON;
         case "cr":
-            constCr = temp;
-            break;
+            (isForward) ? constCr += animStep : constCr  -= animStep;
+            return (isForward) ? constCr < animLast + EPSILON : constCr > animLast - EPSILON;
         case "ci":
-            constCi = temp;
-            break;
+            (isForward) ? constCi += animStep : constCi  -= animStep;
+            return (isForward) ? constCi < animLast + EPSILON : constCi > animLast - EPSILON;
         case "r":
-            bailout = temp;
-            break;
+            (isForward) ? bailout += animStep : bailout  -= animStep;
+            return (isForward) ? bailout < animLast + EPSILON : bailout > animLast - EPSILON;
     }
 }
-
 document.getElementById("slider").addEventListener("input", () =>
 {
     ctx.putImageData(frames[document.getElementById("slider").value], 0, 0);

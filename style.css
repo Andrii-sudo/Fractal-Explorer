@@ -143,3 +143,54 @@ button:hover {
     background-color: #fdecea !important;
     color: #c0392b            !important;
 }
+
+#progress-container
+{
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+
+    z-index: 10;
+
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 0.5rem 1rem;
+
+    min-width: 350px;
+    max-width: 550px;
+}
+
+#progress-label
+{
+    font-size: 0.95rem;
+    color: #555;
+    width: 165px;
+
+}
+
+#fractal-progress
+{
+    width:300px;
+    height:20px
+}
+
+#btn-cancel
+{
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    padding: 0.4rem 1rem;
+}
+
+#btn-cancel:hover
+{
+    background: #c0392b;
+}
