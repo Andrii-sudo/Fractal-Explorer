@@ -8,7 +8,7 @@ const colors =
     ];
 
 const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
 const canvasSpinner = document.getElementById("canvas-spinner");
 
@@ -82,6 +82,8 @@ function hideCanvasSpinner()
 
 canvas.addEventListener("dblclick", event =>
 {
+    if (canvasSpinner.style.display === "block") return;
+
     if (!isCanvasClear && !isAnimating)
     {
         const rect = canvas.getBoundingClientRect();
@@ -96,12 +98,19 @@ canvas.addEventListener("dblclick", event =>
         scale *= 0.5;
 
         drawFractal();
+
+        showCanvasSpinner();
+        setTimeout(() =>
+        {
+            drawFractalChunked(false);
+        }, 1);
     }
 });
 
 canvas.addEventListener("contextmenu", event =>
 {
     event.preventDefault();
+    if (canvasSpinner.style.display === "block") return;
 
     if (!isCanvasClear && !isAnimating)
     {
@@ -116,10 +125,48 @@ canvas.addEventListener("contextmenu", event =>
 
         scale /= 0.5;
 
-        drawFractal();
+        showCanvasSpinner();
+        setTimeout(() =>
+        {
+            drawFractalChunked(false);
+        }, 1);
     }
 });
 
+canvas.addEventListener("wheel", (event) =>
+{
+    event.preventDefault();
+    if (canvasSpinner.style.display === "block") return;
+
+    if (!isCanvasClear && !isAnimating)
+    {
+        const zoomIntensity = 0.2;
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+
+        const [worldX, worldY] = canvasToComplex(mouseX, mouseY);
+
+        const delta = event.deltaY / 100;
+        const factor = 1 + delta * zoomIntensity;
+        scale *= factor;
+
+        centerR = worldX + (centerR - worldX) * factor;
+        centerI = worldY + (centerI - worldY) * factor;
+
+        drawFractal(true);
+
+        clearTimeout(window.renderTimeout);
+        window.renderTimeout = setTimeout(() =>
+        {
+            showCanvasSpinner();
+
+            setTimeout(() =>
+            {
+                drawFractalChunked(false);
+            }, 1);
+        }, 500);
+    }
+});
 
 document.getElementById("fractal-type").addEventListener("change", fractalTypeChanged);
 document.getElementById("maxIter").addEventListener("input", maxIterChanged);
@@ -960,30 +1007,6 @@ document.getElementById("slider").addEventListener("input", () =>
     ctx.putImageData(frames[document.getElementById("slider").value], 0, 0);
 });
 
-function changeAnimParam(isForward)
-{
-    switch (animParam)
-    {
-        case "k":
-            (isForward) ? kmax    += animStep : kmax    -= animStep;
-            return (isForward) ? kmax < animLast   : kmax > animLast;
-        case "zr":
-            (isForward) ? initZr  += animStep : initZr  -= animStep;
-            return (isForward) ? initZr < animLast + EPSILON : initZr > animLast - EPSILON;
-        case "zi":
-            (isForward) ? initZi  += animStep : initZi  -= animStep;
-            return (isForward) ? initZi < animLast + EPSILON : initZi > animLast - EPSILON;
-        case "cr":
-            (isForward) ? constCr += animStep : constCr  -= animStep;
-            return (isForward) ? constCr < animLast + EPSILON : constCr > animLast - EPSILON;
-        case "ci":
-            (isForward) ? constCi += animStep : constCi  -= animStep;
-            return (isForward) ? constCi < animLast + EPSILON : constCi > animLast - EPSILON;
-        case "r":
-            (isForward) ? bailout += animStep : bailout  -= animStep;
-            return (isForward) ? bailout < animLast + EPSILON : bailout > animLast - EPSILON;
-    }
-}
 document.getElementById("slider").addEventListener("input", () =>
 {
     ctx.putImageData(frames[document.getElementById("slider").value], 0, 0);
@@ -1014,7 +1037,7 @@ function changeAnimParam(isForward)
     }
 }
 
-function drawFractal()
+function drawFractal(lowQuality = false)
 {
     document.getElementById("centerRe").value = centerR;
     document.getElementById("centerIm").value = centerI;
@@ -1024,22 +1047,96 @@ function drawFractal()
     document.getElementById("slider").disabled = true;
 
     let i = 0;
+
+    let step = lowQuality ? 8 : 1;
+
     let frame = new ImageData(canvas.width, canvas.height);
-    for (let y = 0; y < canvas.height; y++)
+    for (let y = 0; y < canvas.height; y += step)
     {
-        for (let x = 0; x < canvas.width; x++)
+        for (let x = 0; x < canvas.width; x += step)
         {
             const color = fractalType(x, y);
             let [r, g, b] = hexToRGB(color);
 
-            frame.data[i++] = r;
-            frame.data[i++] = g;
-            frame.data[i++] = b;
-            frame.data[i++] = 255;
+            if (!lowQuality)
+            {
+                frame.data[i++] = r;
+                frame.data[i++] = g;
+                frame.data[i++] = b;
+                frame.data[i++] = 255;
+            }
+            else
+            {
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(x, y, step, step);
+            }
         }
     }
 
-    ctx.putImageData(frame, 0, 0);
+    if (!lowQuality)
+    {
+        ctx.putImageData(frame, 0, 0);
+    }
+}
+
+function drawFractalChunked(lowQuality = false)
+{
+    document.getElementById("centerRe").value = centerR;
+    document.getElementById("centerIm").value = centerI;
+    document.getElementById("zoom").value = 1 / scale * 4 / canvas.width;
+    document.getElementById("rotationAngle").value = rotationAngle;
+
+    document.getElementById("slider").disabled = true;
+
+    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const step = lowQuality ? 8 : 1;
+    let y = 0;
+    let i = 0;
+
+    function processNextChunk()
+    {
+        const startTime = performance.now();
+        const chunkSize = 10;
+
+        for (let chunk = 0; chunk < chunkSize && y < canvas.height; chunk++, y += step)
+        {
+            for (let x = 0; x < canvas.width; x += step)
+            {
+                const color = fractalType(x, y);
+                let [r, g, b] = hexToRGB(color);
+
+                if (!lowQuality)
+                {
+                    const pixelIndex = (y * canvas.width + x) * 4;
+                    frame.data[pixelIndex] = r;
+                    frame.data[pixelIndex + 1] = g;
+                    frame.data[pixelIndex + 2] = b;
+                    frame.data[pixelIndex + 3] = 255;
+                }
+                else
+                {
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, step, step);
+                }
+            }
+        }
+
+        if (y < canvas.height)
+        {
+            ctx.putImageData(frame, 0, 0);
+            requestAnimationFrame(processNextChunk);
+        }
+        else
+        {
+            if (!lowQuality)
+            {
+                ctx.putImageData(frame, 0, 0);
+            }
+            hideCanvasSpinner();
+        }
+    }
+
+    requestAnimationFrame(processNextChunk);
 }
 
 function rotate(x, y, angle) {
