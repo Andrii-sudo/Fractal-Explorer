@@ -42,6 +42,7 @@ const colorSchemes =
 };
 
 let colors = colorSchemes.classic;
+let setColor = "black"
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -206,6 +207,7 @@ canvas.addEventListener("wheel", (event) =>
 
 document.getElementById("fractal-type").addEventListener("change", fractalTypeChanged);
 document.getElementById("color-theme").addEventListener("change", colorThemeChanged);
+document.getElementById("setColor").addEventListener("change", setColorChanged);
 document.getElementById("maxIter").addEventListener("input", maxIterChanged);
 document.getElementById("initZr").addEventListener("input", initZrChanged);
 document.getElementById("initZi").addEventListener("input", initZiChanged);
@@ -355,6 +357,11 @@ function colorThemeChanged()
             colors = colorSchemes.blue_yellow;
             break;
     }
+}
+
+function setColorChanged()
+{
+    setColor = document.getElementById("setColor").value;
 }
 
 function updateAnimParams(type)
@@ -1255,7 +1262,7 @@ function fillMandelbrotPixel(x, y)
             return colors[k % colors.length];
         }
     }
-    return "black";
+    return setColor;
 }
 function fillJuliaPixel(x, y)
 {
@@ -1279,7 +1286,7 @@ function fillJuliaPixel(x, y)
             return colors[k % colors.length];
         }
     }
-    return "black";
+    return setColor;
 }
 
 //
