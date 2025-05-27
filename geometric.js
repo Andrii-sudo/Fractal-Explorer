@@ -19,8 +19,6 @@ let fractalType = document.getElementById("fractal-type").value;
 
 let isCanvasClear = true;
 
-// Add these event listeners after your existing event listeners
-
 document.getElementById("canvas").addEventListener("wheel", function(event) {
     event.preventDefault();
     
@@ -156,6 +154,8 @@ function changeFractalType()
     }
     else if (fractalType === "koch-curve")
     {
+        document.getElementById("animate").disabled = false;
+
         maxIterations = 10;
         maxLineLength = 2500;
 
@@ -165,6 +165,36 @@ function changeFractalType()
 
         document.getElementById("iterations").value = 5;
         document.getElementById("line-len").value = 500;
+        document.getElementById("line-width").value = 1;
+    }
+    else if (fractalType === "hilbert-curve")
+    {
+        document.getElementById("animate").disabled = false;
+        
+        maxIterations = 9;
+        maxLineLength = 1000;
+
+        n = 4;
+        lineLength = 400;
+        lineWidth = 1;
+
+        document.getElementById("iterations").value = 4;
+        document.getElementById("line-len").value = 400;
+        document.getElementById("line-width").value = 1;
+    }
+    else if (fractalType === "inverse-koch")
+    {
+        document.getElementById("animate").disabled = false;
+        
+        maxIterations = 9;
+        maxLineLength = 1000;
+
+        n = 4;
+        lineLength = 400;
+        lineWidth = 1;
+
+        document.getElementById("iterations").value = 4;
+        document.getElementById("line-len").value = 400;
         document.getElementById("line-width").value = 1;
     }
     //
@@ -473,6 +503,55 @@ function drawFractal(isZoom)
             }
         }
     }
+    else if (fractalType === "hilbert-curve") 
+    {
+        if (isZoom) 
+        {
+            drawHilbertCurve(center.x - 200, center.y - 200, lineLength, n);
+        }
+        else if (!isAnimate) 
+        {
+            drawHilbertCurve(center.x - 200, center.y - 200, lineLength, n);
+        }
+        else 
+        {
+            isAnimating = true;
+            for (let i = 1; i <= n; i++) 
+            {
+                setTimeout(() => 
+                {
+                    clearCanvas();
+                    drawHilbertCurve(center.x -200, center.y - 200, lineLength, i);
+                                    
+                    if (i === n) isAnimating = false;
+                }, i * 250);
+            }
+        }
+    }
+    else if (fractalType === "inverse-koch") 
+    {
+        if (isZoom) 
+        {
+            drawInverseKochSnowflake(center.x, center.y + 100, lineLength, n);
+        } 
+        else if (!isAnimate) 
+        {
+            drawInverseKochSnowflake(center.x, center.y + 100, lineLength, n);
+        } 
+        else 
+        {
+            isAnimating = true;
+            for (let i = 1; i <= n; i++) 
+            {
+                setTimeout(() => 
+                {
+                    clearCanvas();
+                    drawInverseKochSnowflake(center.x, center.y + 100, lineLength, i);
+                    if (i === n) isAnimating = false;
+                }, i * 250);
+            }
+        }
+    }        
 }
 
 // ----------------------------------------------------------------------------------------
@@ -597,7 +676,6 @@ function drawSierpinskiTriangle(centerX, centerY, size, iterations)
 
     sierpinski(x1, y1, x2, y2, x3, y3, iterations);
 }
-
 // ----------------------------------------------------------------------------------------
 function drawKochSnowflake(centerX, centerY, size, iterations) 
 {
@@ -785,4 +863,95 @@ function drawKochCurve(x1, y1, x2, y2, depth)
     drawKochCurve(xA, yA, xB, yB, depth);
     drawKochCurve(xB, yB, xC, yC, depth);
     drawKochCurve(xC, yC, x2, y2, depth);
+}
+// ----------------------------------------------------------------------------------------
+function drawHilbertCurve(startX, startY, size, order) 
+{
+    ctx.strokeStyle = document.getElementById("mainColor").value;
+    ctx.lineWidth = lineWidth;
+    
+    const points = [];
+    hilbertPoints(startX, startY, size, 0, 0, size, order, points);
+    
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) 
+    {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+}
+
+function hilbertPoints(x, y, xi, xj, yi, yj, n, points) 
+{
+    if (n <= 0) 
+    {
+        const px = x + (xi + yi) / 2;
+        const py = y + (xj + yj) / 2;
+        points.push({ x: px, y: py });
+    } 
+    else 
+    {
+        hilbertPoints(x, y,           yi/2, yj/2,  xi/2, xj/2, n - 1, points);
+        hilbertPoints(x + xi/2, y + xj/2,   xi/2, xj/2,  yi/2, yj/2, n - 1, points);
+        hilbertPoints(x + xi/2 + yi/2, y + xj/2 + yj/2, xi/2, xj/2,  yi/2, yj/2, n - 1, points);
+        hilbertPoints(x + xi/2 + yi, y + xj/2 + yj, -yi/2, -yj/2, -xi/2, -xj/2, n - 1, points);
+    }
+}
+
+function drawInverseKochSnowflake(centerX, centerY, size, order) 
+{
+    const points = [];
+    
+    const height = size * Math.sqrt(3) / 2;
+    
+    const p1 = { x: centerX, y: centerY - 2/3 * height };
+    const p2 = { x: centerX - size / 2, y: centerY + height / 3 };
+    const p3 = { x: centerX + size / 2, y: centerY + height / 3 };
+    
+    kochInversePoints(p1.x, p1.y, p2.x, p2.y, order, points);
+    kochInversePoints(p2.x, p2.y, p3.x, p3.y, order, points);
+    kochInversePoints(p3.x, p3.y, p1.x, p1.y, order, points);
+
+    ctx.strokeStyle = document.getElementById("mainColor").value;
+    ctx.lineWidth = lineWidth;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) 
+    {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+}
+
+function kochInversePoints(x1, y1, x2, y2, order, points) 
+{
+    if (order === 0) 
+    {
+        if (points.length === 0) points.push({ x: x1, y: y1 });
+        points.push({ x: x2, y: y2 });
+        return;
+    }
+
+    const dx = (x2 - x1) / 3;
+    const dy = (y2 - y1) / 3;
+
+    const xA = x1 + dx;
+    const yA = y1 + dy;
+    const xB = x1 + 2 * dx;
+    const yB = y1 + 2 * dy;
+
+    const angle = -Math.PI / 3; 
+    const vx = xB - xA;
+    const vy = yB - yA;
+
+    const xPeak = xA + vx * Math.cos(angle) - vy * Math.sin(angle);
+    const yPeak = yA + vx * Math.sin(angle) + vy * Math.cos(angle);
+
+    kochInversePoints(x1, y1, xA, yA, order - 1, points);
+    kochInversePoints(xA, yA, xPeak, yPeak, order - 1, points);
+    kochInversePoints(xPeak, yPeak, xB, yB, order - 1, points);
+    kochInversePoints(xB, yB, x2, y2, order - 1, points);
 }
