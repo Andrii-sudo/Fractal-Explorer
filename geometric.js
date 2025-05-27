@@ -112,8 +112,21 @@ function changeFractalType()
         lineWidth = 0.2;
 
         document.getElementById("iterations").value = 100000;
-        document.getElementById("line-len").value = 60;
+        document.getElementById("line-len").value = 30;
         document.getElementById("line-width").value = 0.2;
+    }
+    else if (fractalType === "pythagoras-tree")
+    {
+        maxIterations = 19;
+        maxLineLength = 200;
+
+        n = 10;
+        lineLength = 100;
+        lineWidth = 1;
+
+        document.getElementById("iterations").value = 10;
+        document.getElementById("line-len").value = 100;
+        document.getElementById("line-width").value = 1;
     }
     //
 }
@@ -345,7 +358,32 @@ function drawFractal(isZoom)
                 }
             }, 200);
         }
-    }   
+    }
+    else if (fractalType === "pythagoras-tree") 
+    {
+        if (isZoom) 
+        {
+            drawPythagorasTree(center.x, center.y + 100, -Math.PI / 2, lineLength, n);
+        }
+        else if (!isAnimate) 
+        {
+            drawPythagorasTree(center.x, center.y + 100, -Math.PI / 2, lineLength, n);
+        }
+        else 
+        {
+            isAnimating = true;
+            for (let i = 1; i <= n; i++) 
+            {
+                setTimeout(() => 
+                {
+                    clearCanvas();
+                    drawPythagorasTree(center.x, center.y + 100, -Math.PI / 2, lineLength, i);
+                    
+                    if (i === n) isAnimating = false;
+                }, i * 250);
+            }
+        }
+    }    
 }
 
 // ----------------------------------------------------------------------------------------
@@ -525,26 +563,35 @@ function drawKochSnowflake(centerX, centerY, size, iterations)
     drawKochLine(x3, y3, x1, y1, iterations);
 }
 // ----------------------------------------------------------------------------------------
-function drawBarnsleyFern(centerX, centerY, scaleFactor, iterations) {
+function drawBarnsleyFern(centerX, centerY, scaleFactor, iterations) 
+{
     ctx.fillStyle = document.getElementById("mainColor").value;
 
     let x = 0;
     let y = 0;
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < iterations; i++) 
+    {
         const r = Math.random();
         let nextX, nextY;
 
-        if (r < 0.01) {
+        if (r < 0.01) 
+        {
             nextX = 0;
             nextY = 0.16 * y;
-        } else if (r < 0.86) {
+        } 
+        else if (r < 0.86) 
+        {
             nextX = 0.85 * x + 0.04 * y;
             nextY = -0.04 * x + 0.85 * y + 1.6;
-        } else if (r < 0.93) {
+        } 
+        else if (r < 0.93) 
+        {
             nextX = 0.2 * x - 0.26 * y;
             nextY = 0.23 * x + 0.22 * y + 1.6;
-        } else {
+        } 
+        else 
+        {
             nextX = -0.15 * x + 0.28 * y;
             nextY = 0.26 * x + 0.24 * y + 0.44;
         }
@@ -557,4 +604,23 @@ function drawBarnsleyFern(centerX, centerY, scaleFactor, iterations) {
 
         ctx.fillRect(px, py, lineWidth, lineWidth);
     }
+}
+// ----------------------------------------------------------------------------------------
+function drawPythagorasTree(x, y, angle, length, depth)
+{
+    if (depth === 0) return;
+
+    ctx.strokeStyle = document.getElementById("mainColor").value;
+    ctx.lineWidth = lineWidth;
+
+    let x1 = x + Math.cos(angle) * length;
+    let y1 = y + Math.sin(angle) * length;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    
+    drawPythagorasTree(x1, y1, angle - Math.PI / 6, length * 0.7, depth - 1);
+    drawPythagorasTree(x1, y1, angle + Math.PI / 6, length * 0.7, depth - 1);
 }
