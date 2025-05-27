@@ -64,6 +64,8 @@ function changeFractalType()
     fractalType = document.getElementById("fractal-type").value;
     if (fractalType === "dragon-curve")
     {
+        document.getElementById("animate").disabled = false;
+
         maxIterations = 20;
         maxLineLength = 50;
 
@@ -77,6 +79,8 @@ function changeFractalType()
     }
     else if (fractalType === "sierpinski-triangle")
     {
+        document.getElementById("animate").disabled = false;
+
         maxIterations = 12;
         maxLineLength = 1000;
 
@@ -91,6 +95,8 @@ function changeFractalType()
     }
     else if (fractalType === "koch-snowflake")
     {
+        document.getElementById("animate").disabled = false;
+        
         maxIterations = 8;
         maxLineLength = 1000;
 
@@ -104,6 +110,8 @@ function changeFractalType()
     }
     else if (fractalType === "barnsley-fern") 
     {
+        document.getElementById("animate").disabled = false;
+
         maxIterations = 1000000;
         maxLineLength = 1000;
 
@@ -117,6 +125,8 @@ function changeFractalType()
     }
     else if (fractalType === "pythagoras-tree")
     {
+        document.getElementById("animate").disabled = false;
+
         maxIterations = 19;
         maxLineLength = 200;
 
@@ -126,6 +136,35 @@ function changeFractalType()
 
         document.getElementById("iterations").value = 10;
         document.getElementById("line-len").value = 100;
+        document.getElementById("line-width").value = 1;
+    }
+    else if (fractalType === "brownian-motion")
+    {
+        document.getElementById("animate").checked = false;
+        document.getElementById("animate").disabled = true;
+
+        maxIterations = 10000;
+        maxLineLength = 50;
+
+        n = 1000;
+        lineLength = 10;
+        lineWidth = 1;
+
+        document.getElementById("iterations").value = 1000;
+        document.getElementById("line-len").value = 10;
+        document.getElementById("line-width").value = 1;
+    }
+    else if (fractalType === "koch-curve")
+    {
+        maxIterations = 10;
+        maxLineLength = 2500;
+
+        n = 5;
+        lineLength = 500;
+        lineWidth = 1;
+
+        document.getElementById("iterations").value = 5;
+        document.getElementById("line-len").value = 500;
         document.getElementById("line-width").value = 1;
     }
     //
@@ -383,7 +422,57 @@ function drawFractal(isZoom)
                 }, i * 250);
             }
         }
-    }    
+    }
+    else if (fractalType === "brownian-motion")
+    {
+        if (!isZoom) 
+        {
+            generateBrownianPoints(center.x, center.y, lineLength, n);
+        }
+        drawBrownianMotion();
+    }
+    else if (fractalType === "koch-curve") 
+    {
+        if (isZoom) 
+        {
+            const length = lineLength;
+            const x1 = center.x - length / 2;
+            const y1 = center.y;
+            const x2 = center.x + length / 2;
+            const y2 = center.y;
+
+            drawKochCurve(x1, y1, x2, y2, n);
+        } 
+        else if (!isAnimate) 
+        {
+            const length = lineLength;
+            const x1 = center.x - length / 2;
+            const y1 = center.y;
+            const x2 = center.x + length / 2;
+            const y2 = center.y;
+
+            drawKochCurve(x1, y1, x2, y2, n);
+        } 
+        else 
+        {
+            isAnimating = true;
+            for (let i = 1; i <= n; i++) 
+            {
+                setTimeout(() => 
+                {
+                    clearCanvas();
+                    const length = lineLength;
+                    const x1 = center.x - length / 2;
+                    const y1 = center.y;
+                    const x2 = center.x + length / 2;
+                    const y2 = center.y;
+
+                    drawKochCurve(x1, y1, x2, y2, i);
+                    if (i === n) isAnimating = false;
+                }, i * 250);
+            }
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------------------
@@ -623,4 +712,77 @@ function drawPythagorasTree(x, y, angle, length, depth)
     
     drawPythagorasTree(x1, y1, angle - Math.PI / 6, length * 0.7, depth - 1);
     drawPythagorasTree(x1, y1, angle + Math.PI / 6, length * 0.7, depth - 1);
+}
+// ----------------------------------------------------------------------------------------
+let brownianPoints = [];
+
+function generateBrownianPoints(startX, startY, stepSize, steps) 
+{
+    brownianPoints = [];
+    let x = startX;
+    let y = startY;
+
+    for (let i = 0; i < steps; i++) 
+    {
+        brownianPoints.push({ x, y });
+
+        const angle = Math.random() * 2 * Math.PI;
+        x += Math.cos(angle) * stepSize;
+        y += Math.sin(angle) * stepSize;
+    }
+}
+
+function drawBrownianMotion() 
+{
+    ctx.strokeStyle = document.getElementById("mainColor").value;
+    ctx.lineWidth = lineWidth;
+
+    if (brownianPoints.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(brownianPoints[0].x, brownianPoints[0].y);
+
+    for (let i = 1; i < brownianPoints.length; i++) 
+    {
+        ctx.lineTo(brownianPoints[i].x, brownianPoints[i].y);
+    }
+
+    ctx.stroke();
+}
+// ----------------------------------------------------------------------------------------
+function drawKochCurve(x1, y1, x2, y2, depth) 
+{
+    if (depth === 0) 
+    {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        return;
+    }
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx);
+
+    const segment = dist / 3;
+
+    const xA = x1 + Math.cos(angle) * segment;
+    const yA = y1 + Math.sin(angle) * segment;
+
+    const xC = x2 - Math.cos(angle) * segment;
+    const yC = y2 - Math.sin(angle) * segment;
+
+    const peakAngle = angle - Math.PI / 3;
+    const xB = xA + Math.cos(peakAngle) * segment;
+    const yB = yA + Math.sin(peakAngle) * segment;
+
+    depth--;
+
+    drawKochCurve(x1, y1, xA, yA, depth);
+    drawKochCurve(xA, yA, xB, yB, depth);
+    drawKochCurve(xB, yB, xC, yC, depth);
+    drawKochCurve(xC, yC, x2, y2, depth);
 }
