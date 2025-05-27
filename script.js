@@ -1,11 +1,47 @@
-const colors =
+const colorSchemes =
+{
+    classic:
+    [
+        "#421E0F", "#19071A", "#09012F", "#040449", "#000764", "#0C2C8A",
+        "#1852B1", "#397DD1", "#86B5E5", "#D3ECF8", "#F1E9BF", "#F8C95F",
+        "#FFAA00", "#CC8000", "#995700", "#6A3403"
+    ],
+
+    rainbow:
+    [
+        "#800080", "#0000FF", "#00FFFF", "#00FF00", 
+        "#FFFF00", "#FF8000", "#FF0000", "#FF0080"
+    ],
+
+    thermal:
+    [
+        "#30003B", "#480057", "#60006F", "#700070", "#80005E", "#8C003C", "#98001E", "#A8000F",
+        "#B81800", "#C42800", "#D03800", "#DC4800", "#E05000", "#E86000", "#F07000", "#F87800",
+        "#FF7800", "#FF8800", "#FFA020", "#FFB830", "#FFC840", "#FFE160", "#FFF580", "#FFFFC0"
+    ],
+
+
+    grayscale:
+    [
+        "#181818", "#202020", "#282828", "#303030", "#383838",
+        "#404040", "#484848", "#505050", "#585858", "#606060", "#686868", "#707070", "#787878",
+        "#808080", "#888888", "#909090", "#989898", "#A0A0A0", "#A8A8A8", "#B0B0B0", "#B8B8B8",
+        "#C0C0C0", "#C8C8C8", "#D0D0D0", "#D8D8D8", "#E0E0E0", "#E8E8E8", "#F0F0F0", "#F8F8F8",
+        "#FFFFFF"
+    ],
+
+
+    blue_yellow:
     [
         "#000049", "#000555", "#000C66", "#002577", "#003A8C", "#004F9E", "#0063B2",
         "#0077C4", "#0091D8", "#00A4DD", "#00B8E6", "#30C6EC", "#60D2F4", "#80D8F5",
         "#9BD2F5", "#B8DADB", "#D7E3DE", "#F4EBA5", "#FFEDAF", "#FFE57A", "#FFDE64",
         "#FFD433", "#FFC300", "#F8B200", "#F0AA00", "#E19900", "#DC8C00", "#C87500",
         "#B45500"
-    ];
+    ]
+};
+
+let colors = colorSchemes.classic;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -169,6 +205,7 @@ canvas.addEventListener("wheel", (event) =>
 });
 
 document.getElementById("fractal-type").addEventListener("change", fractalTypeChanged);
+document.getElementById("color-theme").addEventListener("change", colorThemeChanged);
 document.getElementById("maxIter").addEventListener("input", maxIterChanged);
 document.getElementById("initZr").addEventListener("input", initZrChanged);
 document.getElementById("initZi").addEventListener("input", initZiChanged);
@@ -294,6 +331,30 @@ function fractalTypeChanged()
     }
     //else if (fractalType === "burning-ship") { }
     updateAnimParams(strFractalType);
+}
+
+function colorThemeChanged()
+{
+    const clrTheme = document.getElementById("color-theme").value;
+
+    switch (clrTheme)
+    {
+        case "classic":
+            colors = colorSchemes.classic;
+            break;
+        case "rainbow":
+            colors = colorSchemes.rainbow;
+            break;
+        case "thermal":
+            colors = colorSchemes.thermal;
+            break;
+        case "grayscale":
+            colors = colorSchemes.grayscale;
+            break;
+        case "blue_yellow":
+            colors = colorSchemes.blue_yellow;
+            break;
+    }
 }
 
 function updateAnimParams(type)
@@ -1492,3 +1553,12 @@ function animFractal() {
 
     generateFrame();
 }
+
+document.getElementById("btn-save").addEventListener("click", () =>
+{
+    let image = canvas.toDataURL();
+    let aDownloadLink = document.createElement('a');
+    aDownloadLink.download = 'image.png';
+    aDownloadLink.href = image;
+    aDownloadLink.click();
+});
