@@ -1569,3 +1569,16 @@ document.getElementById("btn-save").addEventListener("click", () =>
     aDownloadLink.href = image;
     aDownloadLink.click();
 });
+
+document.getElementById("canvas").addEventListener("mousemove", (e) =>
+{
+    if (isCanvasClear || isAnimating) return;
+
+    let rect = canvas.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    let [re, im] = canvasToComplex(x, y);
+    document.getElementById("mouse-re").textContent = re.toFixed(10);
+    document.getElementById("mouse-im").textContent = im.toFixed(10);
+});
