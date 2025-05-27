@@ -38,7 +38,7 @@
                     <select id="fractal-type">
                         <option value="mandelbrot">Мандельброт</option>
                         <option value="julia">Жюліа</option>
-                        <option value="burning-ship">Burning Ship</option>
+                        <option value="burning-ship">Палаючий корабель</option>
                     </select>
                     <label for="color-theme">Колірна схема:</label>
                     <select id="color-theme">
@@ -63,7 +63,7 @@
                     <div class="field-row"><label for="constCi">Стала Ci:</label><input type="number" value="0" id="constCi"></div>
                 </div>
                 <div class="field-row"><label for="bailout">Поріг втечі:</label><input type="number" value="2" max="5000" id="bailout"></div>
-                <div class="field-row"><label for="formula1">Формула 1:</label><select id="formula1">
+                <div class="field-row" id="form1-cont"><label for="formula1">Формула 1:</label><select id="formula1">
                     <option value="1">1</option>
                     <option value="z">z</option>
                     <option value="sinz">sin(z)</option>
@@ -73,8 +73,8 @@
                     <option value="shz">sh(z)</option>
                     <option value="chz">ch(z)</option>
                 </select></div>
-                <div class="field-row"><label for="pow1">Степінь:</label><input type="number" value="1" id="pow1"></div>
-                <div class="field-row"><label>Формула 2:</label><select id="formula2">
+                <div class="field-row" id="pow1-cont"><label for="pow1">Степінь:</label><input type="number" value="1" id="pow1"></div>
+                <div class="field-row" id="form2-cont"><label>Формула 2:</label><select id="formula2">
                     <option value="1">1</option>
                     <option value="z">z</option>
                     <option value="sinz">sin(z)</option>
@@ -84,7 +84,7 @@
                     <option value="shz">sh(z)</option>
                     <option value="chz">ch(z)</option>
                 </select></div>
-                <div class="field-row"><label for="pow2">Степінь:</label><input type="number" value="1" id="pow2"></div>
+                <div class="field-row" id="pow2-cont"><label for="pow2">Степінь:</label><input type="number" value="1" id="pow2"></div>
                 <button id="btn-draw">Намалювати</button>
                 <button id="btn-save">Зберегти</button>
             </div>
@@ -115,8 +115,8 @@
                 <div class="field-row"><label id="lab-anim-step">Крок:</label><input type="number" value="0.05" id="anim-step"></div>
                 <label for="slider"></label>
                 <input type="range" id="slider" name="slider" min="0" step="1" disabled>
-                <button id="btn-play">Відтворити</button>
                 <button id="btn-anim">Анімувати</button>
+                <button id="btn-play">Відтворити</button>
             </div>
         </div>
     </main>

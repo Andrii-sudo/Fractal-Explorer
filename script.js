@@ -324,14 +324,34 @@ function fractalTypeChanged()
         fractalType = fillMandelbrotPixel;
         document.getElementById("initZ").style.display = "block";
         document.getElementById("initC").style.display = "none";
+
+        document.getElementById("form1-cont").style.display = "grid";
+        document.getElementById("pow1-cont").style.display  = "grid";
+        document.getElementById("form2-cont").style.display = "grid";
+        document.getElementById("pow2-cont").style.display  = "grid";
     }
     else if (strFractalType === "julia")
     {
         fractalType = fillJuliaPixel;
         document.getElementById("initZ").style.display = "none";
         document.getElementById("initC").style.display = "block";
+
+        document.getElementById("form1-cont").style.display = "grid";
+        document.getElementById("pow1-cont").style.display  = "grid";
+        document.getElementById("form2-cont").style.display = "grid";
+        document.getElementById("pow2-cont").style.display  = "grid";
     }
-    //else if (fractalType === "burning-ship") { }
+    else if (strFractalType === "burning-ship") 
+    { 
+        fractalType = fillBurningShipPixel;
+        document.getElementById("initZ").style.display = "block";
+        document.getElementById("initC").style.display = "none";
+
+        document.getElementById("form1-cont").style.display = "none";
+        document.getElementById("pow1-cont").style.display  = "none";
+        document.getElementById("form2-cont").style.display = "none";
+        document.getElementById("pow2-cont").style.display  = "none";
+    }
     updateAnimParams(strFractalType);
 }
 
@@ -377,7 +397,7 @@ function updateAnimParams(type)
     kOption.textContent = "Кількість ітерацій";
     animParam.appendChild(kOption);
 
-    if (type === "mandelbrot")
+    if (type === "mandelbrot" || type === "burning-ship")
     {
         const zrOption = document.createElement("option");
         zrOption.value = "zr";
@@ -1289,7 +1309,27 @@ function fillJuliaPixel(x, y)
     return setColor;
 }
 
-//
+function fillBurningShipPixel(x, y)
+{
+    let [cr, ci] = canvasToComplex(x, y);
+    let [zr, zi] = [initZr, initZi];
+
+    for (let k = 0; k < kmax; k++)
+    {
+        // (|a| + i|b|)^2 = a^2 - b^2 + 2 * i * |a| * |b|
+        let nextZr = zr * zr - zi * zi + cr;
+        let nextZi = 2 * Math.abs(zr) * Math.abs(zi) + ci;
+
+        zr = nextZr;
+        zi = nextZi;
+
+        if (zr * zr + zi * zi > bailout * bailout)
+        {
+            return colors[k % colors.length];
+        }
+    }
+    return setColor;
+}
 
 function complexPow(re, im, power)
 {
@@ -1412,7 +1452,7 @@ document.getElementById("btn-play").addEventListener("click", () => {
             currentFrame += playDirection;
             slider.value = currentFrame;
             ctx.putImageData(frames[currentFrame], 0, 0);
-        }, 50);
+        }, 70);
     }
 });
 
