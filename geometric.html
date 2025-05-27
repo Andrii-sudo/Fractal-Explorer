@@ -62,8 +62,18 @@
                 </div>
             </div>
         </div>
+
+        <button id="main-page-btn" title="Перейти до головної сторінки">Головна сторінка</button>
+        <button id="algebraic-fractals-btn" title="Перейти до алгебраїчних фракталів">Алгебраїчні фрактали</button>
     </main>
 
     <script src="geometric.js"></script>
+    <script>
+        document.getElementById('algebraic-fractals-btn').addEventListener('click', () => 
+        {
+            window.location.href = "algebraic.html";
+        });
+    </script>
+
 </body>
 </html>

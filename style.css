@@ -41,7 +41,7 @@ canvas
 {
     background-color: #fff;
     border: 1px solid #ccc;
-    padding: 1rem;
+    padding: 1rem 1rem 0.5rem 1rem;
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     display: none;
@@ -239,3 +239,53 @@ input[type="checkbox"]
     height: 18px;
     margin-left: 0;    
 }
+
+#algebraic-fractals-btn,
+#geometric-fractals-btn
+{
+    width: 310px;
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 0;
+    background-color: #0077c4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 999;
+    transition: background 0.3s ease;
+}
+
+#main-page-btn 
+{
+    width: 310px;
+    position: fixed;
+    bottom: 4.5rem; 
+    right: 1.5rem;
+    padding: 0.75rem 0;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 999;
+    transition: background 0.3s ease;
+}
+
+#main-page-btn:hover 
+{
+    background-color: #c0392b;
+}
+
+
+#algebraic-fractals-btn:hover,
+#geometric-fractals-btn:hover
+{
+    background-color: #005fa3;
+}
+

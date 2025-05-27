@@ -19,7 +19,8 @@ let fractalType = document.getElementById("fractal-type").value;
 
 let isCanvasClear = true;
 
-document.getElementById("canvas").addEventListener("wheel", function(event) {
+document.getElementById("canvas").addEventListener("wheel", function(event) 
+{
     event.preventDefault();
     
     if (!isCanvasClear) 
@@ -955,3 +956,12 @@ function kochInversePoints(x1, y1, x2, y2, order, points)
     kochInversePoints(xPeak, yPeak, xB, yB, order - 1, points);
     kochInversePoints(xB, yB, x2, y2, order - 1, points);
 }
+
+document.getElementById("btn-save").addEventListener("click", () =>
+{
+    let image = canvas.toDataURL();
+    let aDownloadLink = document.createElement('a');
+    aDownloadLink.download = 'image.png';
+    aDownloadLink.href = image;
+    aDownloadLink.click();
+});
