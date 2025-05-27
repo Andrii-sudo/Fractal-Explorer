@@ -716,7 +716,7 @@ document.getElementById("animParam").addEventListener("change", () =>
             break;
         case "cr":
             labAnimInit.textContent = "Початкове Cr:";
-            labAnimLast.textContent = "Кінцеве Cr:";
+            labAnimLast.textContent = "Кінцева Cr:";
             break;
         case "ci":
             labAnimInit.textContent = "Початкове Ci:";
@@ -1310,4 +1310,185 @@ function ChZ(zr, zi)
     let newZi = Math.sinh(zr) * Math.sin(zi);
 
     return [newZr, newZi];
+}
+
+let isPlaying = false;
+let playInterval = null;
+let playDirection = 1; // 1 - вперед, -1 - назад
+
+document.getElementById("btn-play").addEventListener("click", () => {
+    if (!frames || frames.length === 0) {
+        alert("Спочатку створіть анімацію");
+        return;
+    }
+
+    if (isPlaying) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        document.getElementById("btn-play").textContent = "Відтворити";
+    } else {
+        isPlaying = true;
+        document.getElementById("btn-play").textContent = "Зупинити";
+        
+        playInterval = setInterval(() => {
+            let slider = document.getElementById("slider");
+            let currentFrame = parseInt(slider.value);
+            
+            // Змінюємо напрямок при досягненні кінця або початку
+            if (currentFrame >= frames.length - 1) {
+                playDirection = -1;
+            } else if (currentFrame <= 0) {
+                playDirection = 1;
+            }
+            
+            currentFrame += playDirection;
+            slider.value = currentFrame;
+            ctx.putImageData(frames[currentFrame], 0, 0);
+        }, 50);
+    }
+});
+
+// При створенні нової анімації скидаємо напрямок
+function animFractal() {
+    if (isPlaying) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        document.getElementById("btn-play").textContent = "Відтворити";
+    }
+    playDirection = 1;
+    
+    isAnimating = true;
+
+    document.getElementById("")
+
+    frames = new Array(0);
+    cancelRequested = false;
+
+    progressContainer.style.display = "flex";
+    progressBar.value = 0;
+    progressBar.max = 1;
+    progressLabel.textContent = "Генерується...";
+
+    let isForward = true;
+    if (animInit > animLast)
+    {
+        isForward = false;
+    }
+
+    let temp;
+    switch (animParam)
+    {
+        case "k":
+            temp = kmax;
+            kmax = animInit;
+            break;
+        case "zr":
+            temp = initZr;
+            initZr = animInit;
+            break;
+        case "zi":
+            temp = initZi;
+            initZi = animInit;
+            break;
+        case "cr":
+            temp = constCr;
+            constCr = animInit;
+            break;
+        case "ci":
+            temp = constCi;
+            constCi = animInit;
+            break;
+        case "r":
+            temp = bailout;
+            bailout = animInit;
+            break;
+    }
+
+    let totalFrames = 1;
+    if (animStep > 0)
+    {
+        totalFrames = Math.floor(Math.abs((animLast - animInit) / animStep)) + 1;
+    }
+    progressBar.max = totalFrames;
+
+    let frIndex = 0;
+    let done = false;
+
+    function generateFrame()
+    {
+        if (cancelRequested)
+        {
+            done = true;
+            progressLabel.textContent = "Анімацію зупинено";
+            setTimeout(() => { progressContainer.style.display = "none"; }, 700);
+
+            switch (animParam)
+            {
+                case "k":  kmax    = temp; break;
+                case "zr": initZr  = temp; break;
+                case "zi": initZi  = temp; break;
+                case "cr": constCr = temp; break;
+                case "ci": constCi = temp; break;
+                case "r":  bailout = temp; break;
+            }
+
+            isAnimating = false;
+            document.getElementById("btn-anim").style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[0].style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[1].style.cursor = "pointer";
+
+            return;
+        }
+
+        let i = 0;
+        frames.push(new ImageData(canvas.width, canvas.height));
+        for (let y = 0; y < canvas.height; y++)
+        {
+            for (let x = 0; x < canvas.width; x++)
+            {
+                const color = fractalType(x, y);
+                let [r, g, b] = hexToRGB(color);
+
+                frames[frIndex].data[i++] = r;
+                frames[frIndex].data[i++] = g;
+                frames[frIndex].data[i++] = b;
+                frames[frIndex].data[i++] = 255;
+            }
+        }
+
+        frIndex++;
+        progressBar.value = frIndex;
+        progressLabel.textContent = `Кадр ${frIndex} з ${totalFrames}`;
+
+        if (!changeAnimParam(isForward) || done)
+        {
+            document.getElementById("slider").max = frames.length - 1;
+            document.getElementById("slider").disabled = false;
+            progressLabel.textContent = "Готово!";
+            setTimeout(() => { progressContainer.style.display = "none"; }, 700);
+
+            switch (animParam)
+            {
+                case "k":  kmax    = temp; break;
+                case "zr": initZr  = temp; break;
+                case "zi": initZi  = temp; break;
+                case "cr": constCr = temp; break;
+                case "ci": constCi = temp; break;
+                case "r":  bailout = temp; break;
+            }
+
+            isAnimating = false;
+            document.getElementById("btn-anim").style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[0].style.cursor = "pointer";
+            document.querySelectorAll(".tab-buttons button")[1].style.cursor = "pointer";
+
+            return;
+        }
+        else
+        {
+            setTimeout(generateFrame, 10);
+        }
+    }
+
+    generateFrame();
 }
