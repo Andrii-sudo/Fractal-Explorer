@@ -1394,8 +1394,9 @@ function CtgZ(zr, zi)
 
     let denom = sr * sr + si * si;
 
-    if (denom === 0) {
-        return [NaN, NaN]; // уникнення ділення на нуль
+    if (denom === 0) 
+    {
+        return [NaN, NaN];
     }
 
     let newZr = (cr * sr + ci * si) / denom;
@@ -1424,17 +1425,22 @@ let isPlaying = false;
 let playInterval = null;
 let playDirection = 1; // 1 - вперед, -1 - назад
 
-document.getElementById("btn-play").addEventListener("click", () => {
-    if (!frames || frames.length === 0) {
+document.getElementById("btn-play").addEventListener("click", () => 
+{
+    if (!frames || frames.length === 0) 
+    {
         alert("Спочатку створіть анімацію");
         return;
     }
 
-    if (isPlaying) {
+    if (isPlaying) 
+    {
         clearInterval(playInterval);
         isPlaying = false;
         document.getElementById("btn-play").textContent = "Відтворити";
-    } else {
+    } 
+    else 
+    {
         isPlaying = true;
         document.getElementById("btn-play").textContent = "Зупинити";
         
@@ -1442,10 +1448,12 @@ document.getElementById("btn-play").addEventListener("click", () => {
             let slider = document.getElementById("slider");
             let currentFrame = parseInt(slider.value);
             
-            // Змінюємо напрямок при досягненні кінця або початку
-            if (currentFrame >= frames.length - 1) {
+            if (currentFrame >= frames.length - 1) 
+            {
                 playDirection = -1;
-            } else if (currentFrame <= 0) {
+            } 
+            else if (currentFrame <= 0) 
+            {
                 playDirection = 1;
             }
             
@@ -1456,9 +1464,10 @@ document.getElementById("btn-play").addEventListener("click", () => {
     }
 });
 
-// При створенні нової анімації скидаємо напрямок
-function animFractal() {
-    if (isPlaying) {
+function animFractal() 
+{
+    if (isPlaying) 
+    {
         clearInterval(playInterval);
         isPlaying = false;
         document.getElementById("btn-play").textContent = "Відтворити";
